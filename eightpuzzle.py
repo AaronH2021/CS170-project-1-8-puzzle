@@ -3,7 +3,7 @@ from sys import maxsize
 from copy import deepcopy
 
 
-live_states = []
+seen_states = []
 num_nodes_expanded = 0
 
 #------- Question Class ---------
@@ -82,6 +82,184 @@ class Question:
         to_print.append(self.puzzle_board[row][col])
       print(to_print)
       to_print = []
+
+#--------- Node Class ---------
+class Node:
+  def __init__(self, question, path, heuristic): #node initialization
+    self.question = question
+    self.path = path
+    self.heuristic = heuristic
+
+#--------- Graph Search Functions ---------
+def save_child(node, children):
+  child = deepcopy(node)
+  child.path += 1
+  children.append(child)
+
+def explore_node(node):
+  global num_nodes_expanded
+
+  children = []
+
+  if node.question.move_up():
+    seen_states.append(node.question.puzzle_board)
+    save_child(node, children)
+    node.question.move_down()
+
+  if node.question.move_down():
+    seen_states.append(node.question.puzzle_board)
+    save_child(node, children)
+    node.question.move_up()
+
+  if node.question.move_left():
+    seen_states.append(node.question.puzzle_board)
+    save_child(node, children)
+    node.question.move_right()
+
+  if node.question.move_right():
+    seen_states.append(node.question.puzzle_board)
+    save_child(node, children)
+    node.question.move_left()
+
+  num_nodes_expanded += len(children)
+  return children
+
+def remove_node(frontier):
+  lowest_cost_seen = maxsize
+  positition = maxsize
+
+  for n in range(len(frontier)):
+    if frontier[n].path + frontier[n].heuristic < lowest_cost_seen:
+      lowest_cost_seen = frontier[n].path + frontier[n].heuristic
+      positition = n
+
+  node = frontier.pop(positition)
+  return node
+
+def misplaced_tiles(node):
+  total_misplaced_tiles = 0
+
+  for row in range(len(node.question.puzzle_board)):
+    for col in range(len(node.question.puzzle_board)):
+      if node.question.puzzle_board[row][col] != node.question.goal_state[row][col]:
+        if node.question.puzzle_board[row][col] != 0:
+          total_misplaced_tiles += 1
+
+  return total_misplaced_tiles
+
+def find_in_goal_state(node, row, col):
+  tile = node.question.puzzle_board[row][col]
+
+
+  if tile == 1:
+    row = 0
+    col = 0
+
+  elif tile == 2:
+    row = 0
+    col = 1
+
+  elif tile == 3:
+    row = 0
+    col = 2
+
+  elif tile == 4:
+    row = 1
+    col = 0
+
+  elif tile == 5:
+    row = 1
+    col = 1
+
+  elif tile == 6:
+    row = 1
+    col = 2
+
+  elif tile == 7:
+    row = 2
+    col = 0
+
+  elif tile == 8:
+    row = 2
+    col = 1
+
+  return row, col
+
+def euclidean_distance(node):
+  heurisitic = 0
+
+  for row in range(len(node.question.puzzle_board)):
+    for col in range(len(node.question.puzzle_board)):
+      if node.question.puzzle_board[row][col] != node.question.goal_state[row][col]:
+        if node.question.puzzle_board[row][col] != 0:
+          row_diff, col_diff = find_in_goal_state(node, row, col)
+          distance = pow(pow((row - row_diff), 2) + pow(col - col_diff, 2), 0.5)
+          heurisitic += distance
+
+  return heurisitic
+
+def expand(set_list, node, choice):
+  print("The best state to expand with a g(n) = " + str(node.path) + " and h(n) = " + str(node.heuristic) + " is...")
+  node.question.print_board()
+  print("Expanding this node...")
+  print(" ")
+
+  children = explore_node(node)
+
+  if choice == 1:
+    for child in children:
+      if child.question.puzzle_board not in seen_states:
+        set_list.append(child)
+        seen_states.append(child.question.puzzle_board)
+
+  elif choice == 2:
+    for child in children:
+      child.heuristic = misplaced_tiles(child)
+      if child.question.puzzle_board not in seen_states:
+        set_list.append(child)
+        seen_states.append(child.question.puzzle_board)
+
+  elif choice == 3:
+    for child in children:
+      child.heuristic = euclidean_distance(child)
+      if child.question.puzzle_board not in seen_states:
+        set_list.append(child)
+        seen_states.append(child.question.puzzle_board)
+
+  return set_list
+
+def graph_search(question, choice):
+  path = 0
+  heuristic = 0
+
+  node = Node(question, path, heuristic)
+
+  if choice == 2:
+    node.heuristic = misplaced_tiles(node)
+  elif choice == 3:
+    node.heuristic = euclidean_distance(node)
+
+  frontier = [node]
+  max_queue_size = 0
+
+  while True:
+    max_queue_size = max(len(frontier), max_queue_size)
+
+    if not frontier:
+      print("No solution can be found")
+      return
+
+    (node) = remove_node(frontier)
+
+    if node.question.puzzle_board == question.goal_state:
+      print("Solution found!")
+      print(" ")
+      print("Number of nodes expanded: " + str(num_nodes_expanded))
+      print("Max queue size: " + str(max_queue_size))
+      return
+
+    frontier = expand(frontier, node, choice)
+
 #--------- Main Function ---------
 def main():
   intro  = "Welcome to Aaron Hung's CS170 8-puzzle solver.\n"
@@ -142,20 +320,23 @@ def main():
 
   if third_choice == 1:
     print("Uniform Cost Search Algorithm")
-
+    question.print_board()
     print(" ")
+    graph_search(question, third_choice)
 
 
   elif third_choice == 2:
     print("A* with Misplaced Tile Heuristic Algorithm")
-
+    question.print_board()
     print(" ")
+    graph_search(question, third_choice)
 
 
   elif third_choice == 3:
     print("A* with Euclidean Distance Heuristic Algorithm")
-
+    question.print_board()
     print(" ")
+    graph_search(question, third_choice)
 
 
   else:
