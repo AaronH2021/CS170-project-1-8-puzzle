@@ -1,3 +1,87 @@
+import sys, copy
+from sys import maxsize
+from copy import deepcopy
+
+
+live_states = []
+num_nodes_expanded = 0
+
+#------- Question Class ---------
+class Question:
+  goal_state = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
+
+  def __init__(self, puzzle_board, row_num):
+    self.puzzle_board = puzzle_board
+    self.row_num = row_num
+    self.blank_y_pos, self.blank_x_pos = self.find_blank_tile()
+
+  def find_blank_tile(self):
+    for row in range(len(self.puzzle_board)):
+      for col in range(len(self.puzzle_board)):
+        if self.puzzle_board[row][col] == 0:
+          return row, col
+
+  def swap_tiles(self, new_y, new_x):
+    temp_blank = self.puzzle_board[self.blank_y_pos][self.blank_x_pos]
+    self.puzzle_board[self.blank_y_pos][self.blank_x_pos] = self.puzzle_board[new_y][new_x]
+    self.puzzle_board[new_y][new_x] = temp_blank
+
+
+  def move_up(self):
+    if 0 not in self.puzzle_board[0]:
+      self.swap_tiles(self.blank_y_pos - 1, self.blank_x_pos)
+      self.blank_y_pos = self.blank_y_pos - 1
+      return True
+
+    else:
+      return False
+
+  def move_down(self):
+    if 0 not in self.puzzle_board[2]:
+      self.swap_tiles(self.blank_y_pos + 1, self.blank_x_pos)
+      self.blank_y_pos = self.blank_y_pos + 1
+      return True
+
+    else:
+      return False
+
+  def move_left(self):
+    in_left_col = False
+    for row in range(self.row_num):
+      if self.puzzle_board[row][0] == 0:
+        in_left_col = True
+        break
+
+    if in_left_col == False:
+      self.swap_tiles(self.blank_y_pos, self.blank_x_pos - 1)
+      self.blank_x_pos = self.blank_x_pos - 1
+      return True
+
+    else:
+      return False
+
+  def move_right(self):
+    in_right_col = False
+    for row in range(self.row_num):
+      if self.puzzle_board[row][2] == 0:
+        in_right_col = True
+        break
+
+    if in_right_col == False:
+      self.swap_tiles(self.blank_y_pos, self.blank_x_pos + 1)
+      self.blank_x_pos = self.blank_x_pos + 1
+      return True
+
+    else:
+      return False
+
+  def print_board(self):
+    to_print = []
+    for row in range(len(self.puzzle_board)):
+      for col in range(len(self.puzzle_board)):
+        to_print.append(self.puzzle_board[row][col])
+      print(to_print)
+      to_print = []
 #--------- Main Function ---------
 def main():
   intro  = "Welcome to Aaron Hung's CS170 8-puzzle solver.\n"
@@ -46,7 +130,7 @@ def main():
     print ("Please try again and select an a valid option")
     sys.exit(0)
 
-  problem = Problem(puzzle, 3)
+  question = Question(puzzle, 3)
 
   intro2  = "Choice of algorithms to use:\n"
   intro2  += "1. Uniform Cost Search\n"
