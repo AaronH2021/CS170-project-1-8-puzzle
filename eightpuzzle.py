@@ -185,7 +185,7 @@ def find_in_goal_state(node, row, col):
 
   return row, col
 
-def euclidean_distance(node):
+def manhattan_distance(node):
   heurisitic = 0 #default 0
 
   for row in range(len(node.question.puzzle_board)):
@@ -221,7 +221,7 @@ def expand(set_list, node, choice):
 
   elif choice == 3:
     for child in children:
-      child.heuristic = euclidean_distance(child) #update the heuristic for the childen
+      child.heuristic = manhattan_distance(child) #update the heuristic for the childen
       if child.question.puzzle_board not in seen_states:#if not already a live state
         set_list.append(child)#insert to set
         seen_states.append(child.question.puzzle_board) #upadate live states
@@ -236,8 +236,8 @@ def graph_search(question, choice):
 
   if choice == 2: #update heuristic for misplaced tiles
     node.heuristic = misplaced_tiles(node)
-  elif choice == 3: #update heuristic for euclidean distance
-    node.heuristic = euclidean_distance(node)
+  elif choice == 3: #update heuristic for Manhattan distance
+    node.heuristic = manhattan_distance(node)
 
   frontier = [node] #initialize with first state
   max_queue_size = 0
@@ -315,7 +315,7 @@ def main():
   intro2  = "Choice of algorithms to use:\n"
   intro2  += "1. Uniform Cost Search\n"
   intro2  += "2. A* with Misplaced Tile Heuristic\n"
-  intro2  += "3: A* with Euclidean Distance Heuristic\n"
+  intro2  += "3: A* with Manhattan Distance Heuristic\n"
   print(intro2)
 
   third_choice = int(input())
@@ -335,7 +335,7 @@ def main():
 
 
   elif third_choice == 3:
-    print("A* with Euclidean Distance Heuristic Algorithm")
+    print("A* with Manhattan Distance Heuristic Algorithm")
     question.print_board()
     print(" ")
     graph_search(question, third_choice)
